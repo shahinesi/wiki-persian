@@ -1,7 +1,10 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import frameworkUI from '@framework/ui/vite';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
+import { createLucideIconPlugins } from './src/lib/lucideIconPlugin.js';
+import { createFrappeProxy } from './src/lib/frappeProxyConfig.js';
 
 // Conditionally import frappe-ui plugin
 async function getFrappeUIPlugin(isDev) {
@@ -29,22 +32,25 @@ async function getFrappeUIPlugin(isDev) {
 export default defineConfig(async ({ command, mode }) => {
 	const isDev = process.env.NODE_ENV !== 'production';
 	const frappeui = await getFrappeUIPlugin(isDev);
+	const frappeUiViteEntry = fs.realpathSync(path.resolve(__dirname, 'node_modules/frappe-ui/vite/index.js'));
+	const lucideIconPlugins = await createLucideIconPlugins(frappeUiViteEntry);
+	const frappeProxy = createFrappeProxy({
+		port: 8080,
+		source: '^/(app|login|api|assets|files|private|razorpay_checkout)',
+	});
 
 	const config = {
 		plugins: [
 			frappeui({
-				frappeProxy: {
-					port: 8080,
-					source: '^/(app|login|api|assets|files|private|razorpay_checkout)',
-				},
+				frappeProxy: false,
 				jinjaBootData: true,
-				lucideIcons: true,
 				buildConfig: {
 					indexHtmlPath: '../wiki/www/wiki-app.html',
 					emptyOutDir: true,
 					sourcemap: true,
 				},
 			}),
+			...lucideIconPlugins,
 			frameworkUI(),
 			vue(),
 		],
@@ -71,6 +77,8 @@ export default defineConfig(async ({ command, mode }) => {
 			exclude: ['frappe-ui', 'frappe-ui/editor', 'frappe-ui/list'],
 		},
 		server: {
+			port: frappeProxy.port,
+			proxy: frappeProxy.proxy,
 			allowedHosts: true,
 		},
 	};
