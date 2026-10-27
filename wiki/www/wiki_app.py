@@ -40,6 +40,7 @@ def get_boot():
 	return frappe._dict(
 		{
 			"frappe_version": frappe.__version__,
+			"lang": frappe.local.lang or "en",
 			"site_name": frappe.local.site,
 			"read_only_mode": frappe.flags.read_only,
 			"system_timezone": get_system_timezone(),
