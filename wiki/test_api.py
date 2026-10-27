@@ -1054,9 +1054,16 @@ class TestAppBoot(FrappeTestCase):
 		boot = get_boot()
 
 		self.assertEqual(boot["user_info"]["name"], "Administrator")
+		self.assertEqual(boot["lang"], frappe.local.lang or "en")
 		self.assertIn({"role": "System Manager"}, boot["user_info"]["roles"])
 		# wiki-app.html renders each boot key with Jinja's plain-json `tojson`.
 		json.dumps(boot)
+
+	def test_farsi_app_translations_are_loaded_from_the_wiki_app(self):
+		from frappe.translate import get_all_translations
+
+		translations = get_all_translations("fa")
+		self.assertEqual(translations["All Spaces"], "همهٔ فضاها")
 
 	def test_the_boot_marks_a_guest_as_logged_out(self):
 		from wiki.www.wiki_app import get_boot

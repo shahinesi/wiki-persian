@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 {#- No scroll-smooth: anchor jumps land instantly, which reads better for docs. -#}
-<html lang="en" class="scroll-pt-20">
+{% set page_language = (frappe.local.lang or "en").replace("_", "-") %}
+{% set page_direction = "rtl" if page_language.split("-")[0] in ["fa", "ar", "he", "ps", "ur"] else "ltr" %}
+<html lang="{{ page_language }}" dir="{{ page_direction }}" class="scroll-pt-20">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="language" content="{{ page_language }}">
     <title>
         {% block title %}
         {{_("Frappe Wiki")}}
@@ -22,6 +25,9 @@
     <script type="application/ld+json">{{ breadcrumbs | safe }}</script>
     {% endif %}
 
+    {% if page_language.split("-")[0] == "fa" %}
+    <link rel="preload" href="/assets/wiki/fonts/Vazirmatn-variable.woff2" as="font" type="font/woff2" crossorigin>
+    {% endif %}
     <link rel="stylesheet" href="/assets/wiki/css/tailwind.css?v={{get_tailwindcss_hash()}}">
 
     <!-- Hide x-cloak elements until Alpine loads -->
@@ -31,6 +37,10 @@
         html[data-sidebar-collapsed] .wiki-sidebar { width: 0 !important; border-right-width: 0 !important; }
         html[data-sidebar-collapsed] .wiki-sidebar-toggle { left: 0.5rem !important; }
         html:not([data-sidebar-collapsed]) .wiki-sidebar-toggle { left: calc(18rem - 0.25rem); }
+        html[dir="rtl"] .wiki-sidebar { border-right-width: 0 !important; border-left-width: 1px; }
+        html[dir="rtl"][data-sidebar-collapsed] .wiki-sidebar { border-left-width: 0 !important; }
+        html[dir="rtl"] .wiki-sidebar-toggle { left: auto !important; right: calc(18rem - 0.25rem) !important; }
+        html[dir="rtl"][data-sidebar-collapsed] .wiki-sidebar-toggle { right: 0.5rem !important; }
     </style>
 
     <!-- Theme + sidebar initialization - must run before page renders to prevent flash -->

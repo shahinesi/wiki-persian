@@ -1,4 +1,5 @@
 @import "./assets/Inter/inter.css";
+@import "../../wiki/public/css/vazirmatn.css";
 @import "frappe-ui/style.css";
 /* The editor and list family stylesheets used to be imported here. Their
    subpath exports are gone — the `frappe-ui/editor` and `frappe-ui/list`
@@ -9,6 +10,7 @@
    pull echarts into the editor; the diagrams need just the tokens. */
 @import "../node_modules/frappe-ui/src/charts/style.css";
 @import "../../wiki/public/css/diagrams.css";
+@import "../../wiki/public/css/rtl.css";
 
 /* Tell the browser which theme its native UI (scrollbars, form controls)
    should use — without this, dark mode gets glaring light scrollbars. */

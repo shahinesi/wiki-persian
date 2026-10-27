@@ -26,7 +26,16 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const tailwindBin = join(root, 'frontend/node_modules/.bin/tailwindcss');
+const tailwindPackageDir = join(root, 'frontend/node_modules/tailwindcss');
+const tailwindPackage = JSON.parse(
+	readFileSync(join(tailwindPackageDir, 'package.json'), 'utf8'),
+);
+const tailwindBin = join(
+	tailwindPackageDir,
+	typeof tailwindPackage.bin === 'string'
+		? tailwindPackage.bin
+		: tailwindPackage.bin.tailwindcss,
+);
 const outFile = join(root, 'wiki/public/css/frappe-ui-prose.css');
 const codeBlockSrc = join(
 	root,
@@ -36,14 +45,15 @@ const codeOutFile = join(root, 'wiki/public/css/frappe-ui-code.css');
 
 if (!existsSync(tailwindBin)) {
 	console.error(
-		'generate-public-prose: frontend/node_modules/.bin/tailwindcss not found — run yarn install in frontend/ first.',
+		'generate-public-prose: Tailwind CLI not found in frontend/node_modules — install frontend dependencies first.',
 	);
 	process.exit(1);
 }
 
 execFileSync(
-	tailwindBin,
+	process.execPath,
 	[
+		tailwindBin,
 		'-c',
 		join(root, 'scripts/prose.tailwind.config.mjs'),
 		'-i',

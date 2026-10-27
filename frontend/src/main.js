@@ -9,6 +9,7 @@ import { useSessionStore } from './stores/session';
 import { useUserStore } from './stores/user';
 
 import { trackPageviews } from './telemetry';
+import { applyDocumentLanguage } from './lib/documentLanguage.js';
 import translationPlugin from './translation';
 
 import {
@@ -25,6 +26,8 @@ import {
 
 import './index.css';
 import './wiki-editor-content.css';
+
+applyDocumentLanguage(window.frappe?.boot?.lang);
 
 const globalComponents = {
 	Button,

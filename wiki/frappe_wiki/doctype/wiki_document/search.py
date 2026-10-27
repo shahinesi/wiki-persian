@@ -1,5 +1,6 @@
 import frappe
 
+from wiki.persian_search import search_query_variants
 from wiki.telemetry import capture
 
 
@@ -23,9 +24,18 @@ def search(query: str, space: str | None = None) -> dict:
 	search_engine = WikiSQLiteSearch()
 	filters = {"space": space} if space else {}
 
-	result = search_engine.search(query, filters=filters)
+	# The index stores source text as authored. Query variants account for Arabic
+	# versus Persian Yeh/Kaf and half-space differences without altering content.
+	hits_by_name = {}
+	for variant in search_query_variants(query):
+		result = search_engine.search(variant, filters=filters)
+		for hit in result["results"]:
+			previous = hits_by_name.get(hit["name"])
+			if previous is None or (hit.get("score") or 0) > (previous.get("score") or 0):
+				hits_by_name[hit["name"]] = hit
+	hits = sorted(hits_by_name.values(), key=lambda hit: hit.get("score") or 0, reverse=True)
 
-	hits = _filter_hits_by_space_visibility(result["results"])
+	hits = _filter_hits_by_space_visibility(hits)
 
 	capture("search_performed", interval="1d", surface="reader", hits=bool(hits))
 

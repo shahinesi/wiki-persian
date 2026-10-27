@@ -1,6 +1,7 @@
 import frappe
 
 from wiki.api.search import search_pages
+from wiki.persian_search import search_query_variants
 from wiki.test_permissions import _ensure_role, _ensure_user
 from wiki.tests import WikiTestCase as IntegrationTestCase
 from wiki.tests.factory import make_space, unique_route
@@ -39,10 +40,15 @@ class TestSearchPages(IntegrationTestCase):
 			roles=[(READER_ROLE, "Read")],
 			pages=[{"title": f"{TOKEN} Secret"}],
 		)
+		self.persian_space = make_space(
+			space_name="Persian Search",
+			route=unique_route(),
+			pages=[{"title": "راهنمای کیف پول"}],
+		)
 
 	def tearDown(self):
 		frappe.set_user("Administrator")
-		for space in (self.open_space, self.restricted_space):
+		for space in (self.open_space, self.restricted_space, self.persian_space):
 			frappe.delete_doc("Wiki Space", space.name, force=True)
 
 	def test_matches_the_route_with_spaces_as_hyphens(self):
@@ -50,8 +56,21 @@ class TestSearchPages(IntegrationTestCase):
 		self.assertIn("Onboarding", _titles(f"{TOKEN}-HOWTO"))
 		self.assertEqual(_titles("   "), set())
 
-	def test_ignores_the_title(self):
-		self.assertNotIn("Onboarding", _titles("Onboarding"))
+	def test_matches_the_page_title(self):
+		self.assertIn("Onboarding", _titles("Onboarding"))
+
+	def test_finds_persian_title_when_query_uses_arabic_yeh_and_kaf(self):
+		self.assertIn("راهنمای کیف پول", _titles("راهنماي كیف پول"))
+
+	def test_persian_query_accepts_arabic_yeh_and_kaf(self):
+		variants = search_query_variants("راهنماي كافه")
+		self.assertIn("راهنمای کافه", variants)
+		self.assertIn("راهنماي كافه", variants)
+
+	def test_persian_query_treats_zwnj_as_a_word_boundary(self):
+		variants = search_query_variants("جست\u200cوجو")
+		self.assertIn("جست وجو", variants)
+		self.assertIn("جستوجو", variants)
 
 	def test_ignores_the_space_segment_of_the_route(self):
 		self.assertEqual(_titles(self.open_space.route), set())

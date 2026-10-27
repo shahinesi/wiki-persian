@@ -1,5 +1,6 @@
 import frappe
 
+from wiki.persian_search import search_query_variants
 from wiki.telemetry import capture
 
 PAGE_SEARCH_LIMIT = 20
@@ -13,16 +14,25 @@ def search_pages(query: str) -> list[dict]:
 		return []
 
 	# Routes hyphenate words, so "getting started" still finds `getting-started`.
-	# The slash skips the space's own segment, which every page in it shares.
-	route = query.replace(" ", "-")
+	# Search both titles and routes. Try Arabic/Persian Yeh and Kaf variants so
+	# keyboard and source spelling differences do not hide a Persian page.
+	or_filters = []
+	for variant in search_query_variants(query):
+		route = variant.replace(" ", "-")
+		or_filters.extend(
+			[
+				["Wiki Document", "title", "like", f"%{variant}%"],
+				["Wiki Document", "route", "like", f"%/%{route}%"],
+			]
+		)
 	pages = frappe.get_list(
 		"Wiki Document",
 		filters={
-			"route": ("like", f"%/%{route}%"),
 			"is_group": 0,
 			"is_external_link": 0,
 			"wiki_space": ("is", "set"),
 		},
+		or_filters=or_filters,
 		fields=[
 			"name",
 			"title",
